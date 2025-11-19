@@ -4,7 +4,7 @@ import argparse
 import torch
 from models import seg_model
 from data_loader import get_data_loader
-from utils import create_dir, viz_seg
+from utils import create_dir, viz_seg, rotate_x
 
 
 def create_parser():
@@ -16,7 +16,7 @@ def create_parser():
     parser.add_argument('--num_points', type=int, default=10000, help='The number of points per object to be included in the input data')
 
     # Directories and checkpoint/sample iterations
-    parser.add_argument('--load_checkpoint', type=str, default='model_epoch_0')
+    parser.add_argument('--load_checkpoint', type=str, default='model_epoch_240')
     parser.add_argument('--i', type=int, default=0, help="index of the object to visualize")
 
     parser.add_argument('--test_data', type=str, default='./data/seg/data_test.npy')
@@ -24,6 +24,7 @@ def create_parser():
     parser.add_argument('--output_dir', type=str, default='./output')
 
     parser.add_argument('--exp_name', type=str, default="exp", help='The name of the experiment')
+    parser.add_argument('--rotate',action='store_true', default=False, help='Rotation')
 
     return parser
 
@@ -52,12 +53,34 @@ if __name__ == '__main__':
     test_data = torch.from_numpy((np.load(args.test_data))[:,ind,:])
     test_label = torch.from_numpy((np.load(args.test_label))[:,ind])
 
-    # ------ TO DO: Make Prediction ------
-    pred_label = torch.argmax(model(test_data.to(args.device)), dim=2)
+    # rotation
+    if args.rotate:
+        degree = 30
+        test_data = rotate_x(test_data, torch.tensor(degree*np.pi/180))
 
+    # ------ TO DO: Make Prediction ------
+    # pred_label = torch.argmax(model(test_data.to(args.device)), dim=2)
+    pred_label = torch.zeros(test_label.size(), dtype=torch.long)
+    print('test label size',test_label.shape)
+    for i in range(len(test_data)):
+        pred_label[i] = torch.argmax(model(test_data[i].unsqueeze(0).to(args.device)), dim=2)
     test_accuracy = pred_label.eq(test_label.data).cpu().sum().item() / (test_label.reshape((-1,1)).size()[0])
     print ("test accuracy: {}".format(test_accuracy))
 
+    i = args.i
+    test_accuracy = pred_label[i].eq(test_label.data[i]).cpu().sum().item() / (test_label[i].reshape((-1,1)).size()[0])
+    if args.rotate:
+        gt_save_path = "{}/gt_seg_{}_rot_{}_acc_{}.gif".format(args.output_dir, i, degree, test_accuracy)
+        pred_save_path = "{}/pred_seg_{}_rot_{}_acc_{}.gif".format(args.output_dir, i, degree, test_accuracy)
+    else:
+        gt_save_path = "{}/gt_seg_{}_pts_{}_acc_{}.gif".format(args.output_dir, i, args.num_points, test_accuracy)
+        pred_save_path = "{}/pred_seg_{}_pts_{}_acc_{}.gif".format(args.output_dir, i, args.num_points, test_accuracy)
+
+    print ("obj {} test accuracy: {}".format(i, test_accuracy))
+
+    viz_seg(test_data[i], test_label[i], gt_save_path, args.device, num_points=args.num_points)
+    viz_seg(test_data[i], pred_label[i], pred_save_path, args.device, num_points=args.num_points)
+
     # Visualize Segmentation Result (Pred VS Ground Truth)
-    viz_seg(test_data[args.i], test_label[args.i], "{}/gt_{}.gif".format(args.output_dir, args.exp_name), args.device)
-    viz_seg(test_data[args.i], pred_label[args.i], "{}/pred_{}.gif".format(args.output_dir, args.exp_name), args.device)
+    # viz_seg(test_data[args.i], test_label[args.i], "{}/gt_{}_acc_{}.gif".format(args.output_dir, args.exp_name), args.device)
+    # viz_seg(test_data[args.i], pred_label[args.i], "{}/pred_{}_.gif".format(args.output_dir, args.exp_name), args.device)

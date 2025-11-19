@@ -34,53 +34,39 @@ This will produce the unzipped `data` folder under root directory. There are two
 
 
 ## Q1. Classification Model (40 points)
-Implement the classification model in `models.py`.
 
-- Input: points clouds from across 3 classes (chairs, vases and lamps objects)
+Run the following command, replace the `{obj_index_to_vis}` with the index of the object you intended to visualize.
 
-- Output: propapibility distribution indicating predicted classification (Dimension: Batch * Number of Classes)
+```
+python train.py --task cls
+python eval_cls.py -i {obj_index_to_vis}
+```
 
-Complete model initialization and prediction in `train.py` and `eval_cls.py`. Run `python train.py --task cls` to train the model, and `python eval_cls.py` for evaluation. Check out the arguments and feel free to modify them as you want.
-
-Deliverables: On your website, 
-
-- Report the test accuracy.
-
-- Visualize a few random test point clouds and mention the predicted classes for each. Also visualize at least 1 failure prediction for each class (chair, vase and lamp),  and provide interpretation in a few sentences.  
 
 ## Q2. Segmentation Model (40 points) 
-Implement the segmentation model in `models.py`.  
 
-- Input: points of chair objects (6 semantic segmentation classes) 
+Run the following command, replace the `{obj_index_to_vis}` with the index of the object you intended to visualize.
 
-- Output: segmentation of points (Dimension: Batch * Number of Points per Object * Number of Segmentation Classes)
+```
+python train.py --task seg
+python eval_seg.py -i {obj_index_to_vis}
+```
 
-Complete model initialization and prediction in `train.py` and `eval_seg.py`. Run `python train.py --task seg` to train the model. Running `python eval_seg.py` will save two gif's, one for ground truth and the other for model prediction. Check out the arguments and feel free to modify them as you want. In particular, you may want to specify `--i` and `--load_checkpoint` arguments in `eval_seg.py` to use your desired model checkpoint on a particular object.
 
-Deliverables: On your website 
-
-- Report the test accuracy.
-
-- Visualize segmentation results of at least 5 objects (including 2 bad predictions) with corresponding ground truth, report the prediction accuracy for each object, and provide interpretation in a few sentences.
-  
 ## Q3. Robustness Analysis (20 points) 
-Conduct 2 experiments to analyze the robustness of your learned model. Each experiment is worth 10 points. A maximum of 20 points is possible for this question. Some possible suggestions are:
-1. You can rotate the input point clouds by certain degrees and report how much the accuracy falls
-2. You can input a different number of points points per object (modify `--num_points` when evaluating models in `eval_cls.py` and `eval_seg.py`)
 
-Please also feel free to try other ways of probing the robustness. 
+Run the following command, replace the `{obj_index_to_vis}` with the index of the object you intended to visualize.
 
-Deliverables: On your website, for each experiment
+```
+python eval_cls.py --rotate  -i {obj_index_to_vis}
+python eval_seg.py --rotate -i {obj_index_to_vis}
 
-- Describe your procedure 
-- For each task, report test accuracy and visualization on a few samples, in comparison with your results from Q1 & Q2.
-- Provide some interpretation in a few sentences.
+python eval_cls.py --num_points 1000 -i {obj_index_to_vis}
+python eval_seg.py --num_points 1000 -i {obj_index_to_vis}
+
+python eval_cls.py --num_points 100 -i {obj_index_to_vis}
+python eval_seg.py --num_points 100 -i {obj_index_to_vis}
+```
 
 ## Q4. Bonus Question - Locality (20 points)
-Incorporate certain kind of locality as covered in the lecture (e.g. implement PointNet++, DGCNN, Transformers (https://arxiv.org/pdf/2012.09164v2.pdf), etc).
-
-Deliverables: On your website, 
-
-- specify the model you have implemented
-- for each task, report the test accuracy of your best model, in comparison with your results from Q1 & Q2
-- visualize results in comparison to ones obtained in the earlier parts
+N/A
